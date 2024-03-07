@@ -149,6 +149,14 @@ def calc_stats_diffVar(data, variable = "durationPerPixel", diffVar = "diffScree
         stats_diff_screens[input_type]['stddev'] = statistics.stdev(durations)
     
     return stats_diff_screens
+def add_eyePercentage_to_data():
+    new_column_header = 'eyePercentage'
+    for row in data:
+        if row['duration'] != '0':  # Avoid division by zero
+            row[new_column_header] = row['eyeIntervalsDuration'] / row['duration']
+        else:
+            row[new_column_header] = 0  # If 'duration' is zero, set the new value to zero
+    return data
 
 
 def plot_duration_vs_ydistance(data):
@@ -202,5 +210,14 @@ for input_type, stats in mean_duration_per_pixel_diff_position.items():
 print("\nMean Duration Per Pixel for Different Screens:")
 for input_type, stats in mean_duration_per_pixel_diff_screens.items():
     print(f"{input_type}: M = {stats['mean']}, SD = {stats['stddev']}")
+
+print("\n-------------- eyeIntervalsDuration --------------")
+
+add_eyePercentage_to_data()
+print("\nEye Percentage:")
+mean_eyePercentage = calc_stats(data, "eyePercentage")
+for input_type, stats in mean_eyePercentage.items():
+    print(f"{input_type}: M = {stats['mean']}, SD = {stats['stddev']}")
+
 
 plot_duration_vs_ydistance(data)

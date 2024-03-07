@@ -132,23 +132,24 @@ def calc_stats_diffVar(data, variable = "durationPerPixel", diffVar = "diffScree
         stats_diffVar[input_type]['mean'] = statistics.mean(durations)
         stats_diffVar[input_type]['stddev'] = statistics.stdev(durations)
     return stats_diffVar
+
+def calc_stats_per_size(data, variable="durationPerPixel"):
+    stats_by_sizes = defaultdict(lambda: {'small': {'values': [], 'mean': 0, 'stddev': 0},
+                                           'large': {'values': [], 'mean': 0, 'stddev': 0}})
+
     for row in data:
         input_type = row['inputType']
-        try:
-            duration_per_pixel = int(row[variable])
-        except ValueError:
-            print("The entered variable cannot be cast to int. Please enter a variable with numeric values.")  
-        target_screen = row['targetOnMainScreen']
-        if prev_target_screen is not None and target_screen != prev_target_screen:
-            stats_diff_screens[input_type]['values'].append(duration_per_pixel)
-        prev_target_screen = target_screen
-    
-    for input_type, values_dict in stats_diff_screens.items():
-        durations = values_dict['values']
-        stats_diff_screens[input_type]['mean'] = statistics.mean(durations)
-        stats_diff_screens[input_type]['stddev'] = statistics.stdev(durations)
-    
-    return stats_diff_screens
+        size = row['size']
+        value = row[variable]
+        stats_by_sizes[input_type][size]['values'].append(value)
+    for input_type, sizes_dict in stats_by_sizes.items():
+        for size, values_dict in sizes_dict.items():
+            durations = values_dict['values']
+            if durations:
+                sizes_dict[size]['mean'] = statistics.mean(durations)
+                sizes_dict[size]['stddev'] = statistics.stdev(durations)
+    return stats_by_sizes
+
 def add_eyePercentage_to_data():
     new_column_header = 'eyePercentage'
     for row in data:
@@ -210,6 +211,15 @@ for input_type, stats in mean_duration_per_pixel_diff_position.items():
 print("\nMean Duration Per Pixel for Different Screens:")
 for input_type, stats in mean_duration_per_pixel_diff_screens.items():
     print(f"{input_type}: M = {stats['mean']}, SD = {stats['stddev']}")
+
+print("\n-------------- DurationPerPixel - per sizes --------------")
+mean_duration_per_pixel_per_size = calc_stats_per_size(data, variable="durationPerPixel")
+for input_type, sizes_dict in mean_duration_per_pixel_per_size.items():
+    print(f"{input_type}")
+    for size, values_dict in sizes_dict.items():
+        print(f"{size}")
+        print(f"M = {values_dict['mean']}, SD = {values_dict['stddev']}")
+    print()
 
 print("\n-------------- eyeIntervalsDuration --------------")
 

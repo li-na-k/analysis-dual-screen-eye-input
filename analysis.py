@@ -65,15 +65,31 @@ def filter_first_trial(data):
 
 # filter outliers using interquartile range (IQR) -> threshold: 1.5 * IQR (difference between first and third quartile)
 def filter_outliers_iqr(data, column):
-    values = [int(row[column]) for row in data]
+    values = [row[column] for row in data]
     q1 = np.percentile(values, 25)
     q3 = np.percentile(values, 75)
     iqr = q3 - q1
     threshold = 1.5
     lower_bound = q1 - threshold * iqr
     upper_bound = q3 + threshold * iqr
-    filtered_data = [row for row in data if int(row[column]) >= lower_bound and int(row[column]) <= upper_bound]
-    print("number of filtered trials: ", len(data) - len(filtered_data))
+    print(f"lower bound: {lower_bound}, upper bound: {upper_bound}")
+    filtered_data = []
+    outliers = []
+    for row in data:
+        value = row[column]
+        if value >= lower_bound and value <= upper_bound:
+            filtered_data.append(row)
+        else:
+            outliers.append(row)
+    count_outliers_mouse = 0
+    for outlier in outliers:
+        print(f"{outlier['inputType']}, trial: {outlier['trial_num']}, value: {outlier['durationPerPixel']}")
+        if(outlier['inputType'] == 'Mouse'):
+            count_outliers_mouse += 1
+    print("number of filtered outliers: ", len(data) - len(filtered_data))
+    print("of which Mouse input:", count_outliers_mouse)
+    return filtered_data
+
 def filter_errors_aborted(data):
     filtered_data = []
     for row in data:

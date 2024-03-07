@@ -54,6 +54,15 @@ def read_folder(folderpath):
         read_csv(filepath)
     return data
 
+def filter_first_trial(data):
+    filtered_data = []
+    for row in data:
+        if (row['trial_num']) > 0:
+            filtered_data.append(row)
+        else:
+            print("First trial removed.")
+    return filtered_data
+
 # filter outliers using interquartile range (IQR) -> threshold: 1.5 * IQR (difference between first and third quartile)
 def filter_outliers_iqr(data, column):
     values = [int(row[column]) for row in data]
@@ -65,6 +74,19 @@ def filter_outliers_iqr(data, column):
     upper_bound = q3 + threshold * iqr
     filtered_data = [row for row in data if int(row[column]) >= lower_bound and int(row[column]) <= upper_bound]
     print("number of filtered trials: ", len(data) - len(filtered_data))
+def filter_errors_aborted(data):
+    filtered_data = []
+    for row in data:
+        count_outliers_total = 0
+        count_outliers_mouse = 0
+        if row['errors'] > 0 or row['aborted'] == 'true':
+            count_outliers_total += 1
+            if row['inputType'] == 'Mouse':
+                count_outliers_mouse += 1
+        else:
+            filtered_data.append(row)
+    print("number of filtered trials (errors or aborted): ", count_outliers_total)
+    print("of which Mouse input:", count_outliers_mouse)
     return filtered_data
 
 def calc_stats(data, variable = "durationPerPixel"):
@@ -155,8 +177,11 @@ data = read_csv("analysis\data_to_analyse\experimentResults (42).csv")
 
 #folder_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data_to_analyse")
 #data = read_folder(folder_path)
-#! --------- should outliars be filtered? ----------
-data = filter_outliers_iqr(data, "durationPerPixel")
+#! --------- how should outliars be filtered? ----------
+print("\n------------- Filter ----------------")
+#data = filter_outliers_iqr(data, "durationPerPixel") #! simply filtering all outliers is usually not legitimate (unless they occur for a reason that makes filtering them meaningful)
+data = filter_errors_aborted(data)
+data = filter_first_trial(data)
 
 mean_duration_per_pixel = calc_stats(data, "durationPerPixel")
 mean_duration_per_pixel_diff_position = calc_stats_diff_position(data, "durationPerPixel")

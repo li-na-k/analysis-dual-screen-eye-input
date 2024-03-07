@@ -120,30 +120,18 @@ def calc_stats(data, variable = "durationPerPixel"):
         stats[input_type]['stddev'] = statistics.stdev(durations)
     return stats
 
-def calc_stats_diff_position(data, variable = "durationPerPixel"):
-    stats_diff_position = defaultdict(lambda: {'values': [], 'mean': 0, 'stddev': 0})
-    prev_position = None
+def calc_stats_diffVar(data, variable = "durationPerPixel", diffVar = "diffScreen"):
+    stats_diffVar = defaultdict(lambda: {'values': [], 'mean': 0, 'stddev': 0})
     for row in data:
         input_type = row['inputType']
-        try: 
-            duration_per_pixel = int(row[variable])
-        except ValueError:
-            print("The entered variable cannot be cast to int. Please enter a variable with numeric values.")    
-        position = int(row['posNumber'])
-        if prev_position is not None and position != prev_position:
-            stats_diff_position[input_type]['values'].append(duration_per_pixel)
-        prev_position = position
-    
-    for input_type, values_dict in stats_diff_position.items():
+        diffVarTrue = row[diffVar]
+        if diffVarTrue:
+            stats_diffVar[input_type]['values'].append(row[variable])
+    for input_type, values_dict in stats_diffVar.items():
         durations = values_dict['values']
-        stats_diff_position[input_type]['mean'] = statistics.mean(durations)
-        stats_diff_position[input_type]['stddev'] = statistics.stdev(durations)
-    
-    return stats_diff_position
-
-def calc_stats_diff_screens(data, variable = "durationPerPixel"):
-    stats_diff_screens = defaultdict(lambda: {'values': [], 'mean': 0, 'stddev': 0})
-    prev_target_screen = None
+        stats_diffVar[input_type]['mean'] = statistics.mean(durations)
+        stats_diffVar[input_type]['stddev'] = statistics.stdev(durations)
+    return stats_diffVar
     for row in data:
         input_type = row['inputType']
         try:
@@ -200,8 +188,8 @@ data = filter_errors_aborted(data)
 data = filter_first_trial(data)
 
 mean_duration_per_pixel = calc_stats(data, "durationPerPixel")
-mean_duration_per_pixel_diff_position = calc_stats_diff_position(data, "durationPerPixel")
-mean_duration_per_pixel_diff_screens = calc_stats_diff_screens(data, "durationPerPixel")
+mean_duration_per_pixel_diff_position = calc_stats_diffVar(data, "durationPerPixel", "diffPos")
+mean_duration_per_pixel_diff_screens = calc_stats_diffVar(data, "durationPerPixel", "diffScreen")
     
 print("Mean Duration Per Pixel:")
 for input_type, stats in mean_duration_per_pixel.items():

@@ -109,10 +109,7 @@ def calc_stats(data, variable = "durationPerPixel"):
     stats = defaultdict(lambda: {'values': [], 'mean': 0, 'stddev': 0})
     for row in data:
         input_type = row['inputType']
-        try:
-            duration_per_pixel = int(row[variable])
-        except ValueError:
-            print("The entered variable cannot be cast to int. Please enter a variable with numeric values.")  
+        duration_per_pixel = row[variable]
         stats[input_type]['values'].append(duration_per_pixel)
     for input_type, values_dict in stats.items():
         durations = values_dict['values']

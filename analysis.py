@@ -157,30 +157,33 @@ def add_eyePercentage_to_data():
     return data
 
 
+marker_map = {
+    "Mouse": {
+        "large": ['#ff7f0e', "o"],
+        "small": ['#ff7f0e', "s"] #'#ffbb78'
+    },
+    "Eye + Mouse": {
+       "large": ['#1f77b4', "o"],
+       "small": ['#1f77b4', "s"] #'#aec7e8'
+    }
+}
+
 def plot_duration_vs_ydistance(data):
-    input_types = set()
+    plt.figure()
     for row in data:
-        input_types.add(row['inputType'])
-    
-    color_map = {}
-    for i, input_type in enumerate(input_types):
-        color_map[input_type] = f'C{i}'
-    
-    for input_type in input_types:
-        x_values = []
-        y_values = []
-        for row in data:
-            if row['inputType'] == input_type:
-                x_values.append(int(row['YdistancePrevTarget']))
-                y_values.append(int(row['duration']))
-        plt.scatter(x_values, y_values, color=color_map[input_type], label=input_type)
-
-    plt.xlabel('YdistancePrevTarget')
+        size = row['size']
+        input_type = row['inputType']
+        color = marker_map[input_type][size][0]
+        marker = marker_map[input_type][size][1]
+        plt.scatter(row['YdistancePrevTarget'], row['duration'], color=color, marker=marker, label=(input_type +", "+ size), s=20)
+    plt.xlabel('Distance to previous target')
     plt.ylabel('Duration')
-    plt.title('Duration vs YdistancePrevTarget')
-    plt.legend()
+    plt.title('Duration vs Distance')
+    #remove duplicate labels by putting them in dict
+    handles, labels = plt.gca().get_legend_handles_labels()
+    by_label = dict(zip(labels, handles))
+    plt.legend(by_label.values(), by_label.keys())
     plt.show()
-
 
 # !--------- enter single csv file or or use files from data_to_analyse folder ------------
 data = read_csv("analysis\data_to_analyse\experimentResults (42).csv")

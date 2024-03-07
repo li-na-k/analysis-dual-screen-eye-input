@@ -4,28 +4,54 @@ import statistics
 import matplotlib.pyplot as plt
 import numpy as np
 
-def read_csv(file_path):
-    data = []
-    with open(file_path, newline='') as csvfile:
-        reader = csv.DictReader(csvfile, delimiter=';')
-        for row in reader:
-            data.append(row)
+data = []
+def read_csv(filepath):
+    trial_num_per_input_type = defaultdict(int)
+    if filepath.endswith(".csv"):
+        with open(filepath, newline='') as csvfile:
+            reader = csv.DictReader(csvfile, delimiter=';')
+            # Check if the required columns are present
+            if all(col in reader.fieldnames for col in ['inputType', 'durationPerPixel', 'YdistancePrevTarget']): #TODO: add necessary columns here
+                prev_screen = None
+                prev_pos = None
+                for row in reader:
+                    # cast from string to int if numeric value
+                    for col in row:
+                        val = row[col]
+                        try:
+                            row[col] = int(val)
+                        except ValueError:
+                            pass #leave it a string  
+
+                    # add trial number for the current input type, starting from 0
+                    input_type = row['inputType']
+                    row['trial_num'] = trial_num_per_input_type[input_type]
+                    trial_num_per_input_type[input_type] += 1
+
+                    # add diffScreen and diffPos column
+                    current_screen = row['targetOnMainScreen']
+                    current_pos = row["posNumber"]
+                    if prev_screen is not None and current_screen != prev_screen:
+                        row["diffScreen"] = True
+                    else:
+                        row["diffScreen"] = False
+                    if prev_pos is not None and current_pos != prev_pos:
+                        row["diffPos"] = True
+                    else:
+                        row["diffPos"] = False
+                    prev_screen = current_screen
+                    prev_pos = current_pos
+                    data.append(row)
+            else:
+                print(f"Ignoring file {filepath} as it does not have all required columns.")
+    else:
+        print(f"Ignoring file {filepath} as it is not a CSV-file.")
     return data
 
-def read_folder(folder_path):
-    data = []
-    for filename in os.listdir(folder_path):
-        if filename.endswith(".csv"):
-            filepath = os.path.join(folder_path, filename)
-            with open(filepath, newline='') as csvfile:
-                reader = csv.DictReader(csvfile, delimiter=';')
-                # Check if the required columns are present
-                if all(col in reader.fieldnames for col in ['inputType', 'durationPerPixel', 'YdistancePrevTarget']): #TODO: add necessary columns here
-                    # Read the contents of the CSV file and append to the data list
-                    for row in reader:
-                        data.append(row)
-                else:
-                    print(f"Ignoring file {filename} as it does not have all required columns.")
+def read_folder(folderpath):
+    for filename in os.listdir(folderpath):
+        filepath = os.path.join(folderpath, filename)
+        read_csv(filepath)
     return data
 
 # filter outliers using interquartile range (IQR) -> threshold: 1.5 * IQR (difference between first and third quartile)
@@ -125,9 +151,10 @@ def plot_duration_vs_ydistance(data):
 
 
 # !--------- enter single csv file or or use files from data_to_analyse folder ------------
-#data = read_csv("experimentResults (42).csv")
-folder_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data_to_analyse")
-data = read_folder(folder_path)
+data = read_csv("analysis\data_to_analyse\experimentResults (42).csv")
+
+#folder_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data_to_analyse")
+#data = read_folder(folder_path)
 #! --------- should outliars be filtered? ----------
 data = filter_outliers_iqr(data, "durationPerPixel")
 

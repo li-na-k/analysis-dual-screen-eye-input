@@ -176,13 +176,32 @@ def plot_duration_vs_ydistance(data):
         color = marker_map[input_type][size][0]
         marker = marker_map[input_type][size][1]
         plt.scatter(row['YdistancePrevTarget'], row['duration'], color=color, marker=marker, label=(input_type +", "+ size), s=20)
-    plt.xlabel('Distance to previous target')
-    plt.ylabel('Duration')
+    plt.xlabel('Distance to previous target (px)')
+    plt.ylabel('Duration (ms)')
+    #annotating the x axis with arrow
+    plt.annotate('', xy=(-130, -200),xytext=(150,-200),
+            arrowprops=dict(arrowstyle='<->',color='#9f9f9f'),   
+            annotation_clip=False)
+    plt.annotate('', xy=(300, -200),xytext=(2400,-200),                     
+            arrowprops=dict(arrowstyle='<->',color='#9f9f9f'),  
+            annotation_clip=False)       
+    plt.annotate('', xy=(1100, -270),xytext=(2400,-270),                     
+            arrowprops=dict(arrowstyle='<->',color='#9f9f9f'),  
+            annotation_clip=False)                         
+    #text annotation for arrow
+    plt.annotate('same pos',xy=(-140,-320),xytext=(-140,-320), color='#9f9f9f',
+            annotation_clip=False)
+    plt.annotate('different pos',xy=(400,-320),xytext=(400,-320), color='#9f9f9f',
+            annotation_clip=False)
+    plt.annotate('different screen',xy=(1200,-390),xytext=(1200,-390), color='#9f9f9f',
+            annotation_clip=False)
+    
     plt.title('Duration vs Distance')
     #remove duplicate labels by putting them in dict
     handles, labels = plt.gca().get_legend_handles_labels()
     by_label = dict(zip(labels, handles))
     plt.legend(by_label.values(), by_label.keys())
+    plt.tight_layout()
     plt.show()
 
 # !--------- enter single csv file or or use files from data_to_analyse folder ------------

@@ -147,6 +147,24 @@ def calc_stats_per_size(data, variable="durationPerPixel"):
                 sizes_dict[size]['stddev'] = statistics.stdev(durations)
     return stats_by_sizes
 
+def calc_stats_per_size_diffVar(data, variable="durationPerPixel", diffVar="diffScreen"):
+    stats_perSize_diffVar = defaultdict(lambda: {'small': {'values': [], 'mean': 0, 'stddev': 0},
+                                           'large': {'values': [], 'mean': 0, 'stddev': 0}})
+    # Calculate statistics for each size
+    for row in data:
+        input_type = row['inputType']
+        diffVarTrue = row[diffVar]
+        size = row['size']
+        if diffVarTrue:
+            stats_perSize_diffVar[input_type][size]['values'].append(row[variable])
+    for input_type, sizes_dict in stats_perSize_diffVar.items():      
+        for size, values_dict in sizes_dict.items():
+            durations = values_dict['values']
+            if durations:
+                sizes_dict[size]['mean'] = statistics.mean(durations)
+                sizes_dict[size]['stddev'] = statistics.stdev(durations)
+    return stats_perSize_diffVar
+
 def add_eyePercentage_to_data():
     new_column_header = 'eyePercentage'
     for row in data:

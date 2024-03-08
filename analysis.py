@@ -87,7 +87,7 @@ def filter_outliers_iqr(data, column):
         if(outlier['inputType'] == 'Mouse'):
             count_outliers_mouse += 1
     print("number of filtered outliers: ", len(data) - len(filtered_data))
-    print("of which Mouse input:", count_outliers_mouse)
+    print("    of which Mouse input:", count_outliers_mouse)
     return filtered_data
 
 def filter_errors_aborted(data):
@@ -102,7 +102,7 @@ def filter_errors_aborted(data):
         else:
             filtered_data.append(row)
     print("number of filtered trials (errors or aborted): ", count_outliers_total)
-    print("of which Mouse input:", count_outliers_mouse)
+    print("    of which Mouse input:", count_outliers_mouse)
     return filtered_data
 
 def calc_stats(data, variable = "durationPerPixel"):
@@ -133,7 +133,6 @@ def calc_stats_diffVar(data, variable = "durationPerPixel", diffVar = "diffScree
 def calc_stats_per_size(data, variable="durationPerPixel"):
     stats_by_sizes = defaultdict(lambda: {'small': {'values': [], 'mean': 0, 'stddev': 0},
                                            'large': {'values': [], 'mean': 0, 'stddev': 0}})
-
     for row in data:
         input_type = row['inputType']
         size = row['size']
@@ -233,29 +232,46 @@ print("\n------------- Filter ----------------")
 data = filter_errors_aborted(data)
 data = filter_first_trial(data)
 
-mean_duration_per_pixel = calc_stats(data, "durationPerPixel")
-mean_duration_per_pixel_diff_position = calc_stats_diffVar(data, "durationPerPixel", "diffPos")
-mean_duration_per_pixel_diff_screens = calc_stats_diffVar(data, "durationPerPixel", "diffScreen")
-    
-print("Mean Duration Per Pixel:")
-for input_type, stats in mean_duration_per_pixel.items():
+print("\n-------------- DurationPerPixel --------------")
+mean_durationPerPixel = calc_stats(data, "durationPerPixel")
+for input_type, stats in mean_durationPerPixel.items():
     print(f"{input_type}: M = {stats['mean']}, SD = {stats['stddev']}")
     
-print("\nMean Duration Per Pixel for Different Positions:")
-for input_type, stats in mean_duration_per_pixel_diff_position.items():
-    print(f"{input_type}: M = {stats['mean']}, SD = {stats['stddev']}")
+print("\n    ----- only for different positions:")
+mean_durationPerPixel_diffPosition = calc_stats_diffVar(data, "durationPerPixel", "diffPos")
+for input_type, stats in mean_durationPerPixel_diffPosition.items():
+    print(f"    {input_type}: M = {stats['mean']}, SD = {stats['stddev']}")
 
-print("\nMean Duration Per Pixel for Different Screens:")
-for input_type, stats in mean_duration_per_pixel_diff_screens.items():
-    print(f"{input_type}: M = {stats['mean']}, SD = {stats['stddev']}")
+print("\n    ----- only for different screens:")
+mean_durationPerPixel_diffScreen = calc_stats_diffVar(data, "durationPerPixel", "diffScreen")
+for input_type, stats in mean_durationPerPixel_diffScreen.items():
+    print(f"    {input_type}: M = {stats['mean']}, SD = {stats['stddev']}")
 
 print("\n-------------- DurationPerPixel - per sizes --------------")
-mean_duration_per_pixel_per_size = calc_stats_per_size(data, variable="durationPerPixel")
-for input_type, sizes_dict in mean_duration_per_pixel_per_size.items():
+mean_durationPerPixel_perSize = calc_stats_per_size(data, variable="durationPerPixel")
+for input_type, sizes_dict in mean_durationPerPixel_perSize.items():
     print(f"{input_type}")
     for size, values_dict in sizes_dict.items():
         print(f"{size}")
         print(f"M = {values_dict['mean']}, SD = {values_dict['stddev']}")
+    print()
+
+print("\n    ----- only for different positions:")
+mean_durationPerPixel_perSize_diffPos = calc_stats_per_size_diffVar(data, "durationPerPixel", "diffPos")
+for input_type, sizes_dict in mean_durationPerPixel_perSize_diffPos.items():
+    print(f"    {input_type}")
+    for size, values_dict in sizes_dict.items():
+        print(f"    {size}")
+        print(f"    M = {values_dict['mean']}, SD = {values_dict['stddev']}")
+    print()
+
+print("\n    ----- only for different screens:")
+mean_durationPerPixel_perSize_diffScreens = calc_stats_per_size_diffVar(data, "durationPerPixel", "diffScreen")
+for input_type, sizes_dict in mean_durationPerPixel_perSize_diffScreens.items():
+    print(f"    {input_type}")
+    for size, values_dict in sizes_dict.items():
+        print(f"    {size}")
+        print(f"    M = {values_dict['mean']}, SD = {values_dict['stddev']}")
     print()
 
 print("\n-------------- eyeIntervalsDuration --------------")

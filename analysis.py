@@ -177,12 +177,21 @@ def add_eyePercentage_to_data():
 
 marker_map = {
     "Mouse": {
-        "large": ['#ff7f0e', "o"],
-        "small": ['#ff7f0e', "s"] #'#ffbb78'
+        "large": ['#b6b6b6', "o"],
+        "small": ['#b6b6b6', "s"]
     },
-    "Eye + Mouse": {
-       "large": ['#1f77b4', "o"],
-       "small": ['#1f77b4', "s"] #'#aec7e8'
+    "MAGIC": {
+       "large": ['#ec7c0c', "o"],
+       "small": ['#ec7c0c', "s"] 
+    },
+    "NINJA": {
+       "large": ['#080a9e', "o"],
+       "small": ['#080a9e', "s"] 
+    }
+    ,
+    "Touchpad": {
+       "large": ['#000000', "o"],
+       "small": ['#000000', "s"] 
     }
 }
 

@@ -1,6 +1,7 @@
 import csv, os
 from collections import defaultdict
 import statistics
+import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -195,36 +196,87 @@ marker_map = {
     }
 }
 
-def plot_duration_vs_ydistance(data):
+def plot_bar_diagram(data, variable = "durationPerPixel", label='Mean Duration per Pixel (ms)', diffVar = None):
+    if(diffVar):
+        mean_durationPerPixel = calc_stats_diffVar(data, variable, diffVar)
+    else:
+        mean_durationPerPixel = calc_stats(data, variable)
+        print("no diff var")
+    input_types = list(mean_durationPerPixel.keys())
+    means = [stats['mean'] for stats in mean_durationPerPixel.values()]
+    stddevs = [stats['stddev'] for stats in mean_durationPerPixel.values()]
+    plt.figure(figsize=(10, 6))
+    plt.grid(axis='y', linestyle='-', alpha=0.7)
+    plt.bar(input_types, means, yerr=stddevs, capsize=5, color="grey", zorder=2)
+    plt.xlabel('Input Method')
+    plt.ylabel(label)
+    plt.xticks(rotation=0)
+    for spine in plt.gca().spines.values():
+        spine.set_visible(False) # Remove the border around the plot
+    plt.tight_layout()
+    plt.show()
+
+def plot_bar_diagram_per_size(data, variable="durationPerPixel", label='Mean Duration per Pixel (ms)', diffVar=None, diffVarLabel=""):
+    if diffVar:
+        mean_durationPerPixel = calc_stats_per_size_diffVar(data, variable, diffVar)
+    else:
+        mean_durationPerPixel = calc_stats_per_size(data, variable)
+    input_types = list(mean_durationPerPixel.keys())
+    sizes = sorted(set(size for input_type in mean_durationPerPixel.keys() for size in mean_durationPerPixel[input_type].keys()))
+    bar_width = 0.15
     plt.figure()
-    for row in data:
-        size = row['size']
-        input_type = row['inputType']
-        color = marker_map[input_type][size][0]
-        marker = marker_map[input_type][size][1]
-        plt.scatter(row['YdistancePrevTarget'], row['duration'], color=color, marker=marker, label=(input_type +", "+ size), s=20)
+    plt.grid(axis='y', linestyle='-', alpha=0.7)
+    ticks = [[], []]
+    for index_size, size in enumerate(sizes):
+        for index_input_types, input_type in enumerate(input_types):
+            if(input_type in marker_map):
+                mean = [mean_durationPerPixel[input_type][size]['mean']]
+                stddev = [mean_durationPerPixel[input_type][size]['stddev']]
+                color = marker_map[input_type][size][0]
+                plt.bar(index_size + index_input_types* bar_width, mean, bar_width, yerr=stddev, capsize=5, color=color, zorder=2)
+                ticks[0].append(index_size + index_input_types* bar_width)
+                ticks[1].append(f"{size}\n{input_type}")
+    plt.ylabel(label)
+    plt.xticks(ticks[0], ticks[1], rotation=0)
+    plt.title(diffVarLabel)
+    for spine in plt.gca().spines.values():
+        spine.set_visible(False) # Remove the border around the plot
+    plt.tight_layout()
+    plt.show()
+
+def plot_duration_vs_ydistance(data, bucket_size=50):
+    df = pd.DataFrame(data)
+
+    plt.figure()
+
+    for input_type in df['inputType'].unique():
+        input_df = df[df['inputType'] == input_type].copy()
+
+        input_df['bucketed_distance'] = (input_df['YdistancePrevTarget'] // bucket_size) * bucket_size
+
+        avg_data = input_df.groupby('bucketed_distance')['duration'].agg(['mean', 'count', 'std']).reset_index()
+        avg_data['sem'] = avg_data['std'] / np.sqrt(avg_data['count'])
+
+        for size in input_df['size'].unique():
+            size_df = input_df[input_df['size'] == size]
+            
+            if input_type in marker_map:
+                color = marker_map[input_type][size][0]
+                marker = marker_map[input_type][size][1]
+                # scatterplot
+                plt.scatter(size_df['YdistancePrevTarget'], size_df['duration'], 
+                            color=color, marker=marker, label=(f"{input_type}, {size}"), s=20)
+                # errorbars
+                plt.errorbar(avg_data['bucketed_distance'], avg_data['mean'], 
+                             yerr=avg_data['sem'], fmt='o', color=color, 
+                             label=f'Avg Duration ({input_type}, bucket size={bucket_size})', 
+                             markersize=6, linestyle='--', capsize=5)
+
     plt.xlabel('Distance to previous target (px)')
     plt.ylabel('Duration (ms)')
-    #annotating the x axis with arrow
-    plt.annotate('', xy=(-130, -200),xytext=(150,-200),
-            arrowprops=dict(arrowstyle='<->',color='#9f9f9f'),   
-            annotation_clip=False)
-    plt.annotate('', xy=(300, -200),xytext=(2400,-200),                     
-            arrowprops=dict(arrowstyle='<->',color='#9f9f9f'),  
-            annotation_clip=False)       
-    plt.annotate('', xy=(1100, -270),xytext=(2400,-270),                     
-            arrowprops=dict(arrowstyle='<->',color='#9f9f9f'),  
-            annotation_clip=False)                         
-    #text annotation for arrow
-    plt.annotate('same pos',xy=(-140,-320),xytext=(-140,-320), color='#9f9f9f',
-            annotation_clip=False)
-    plt.annotate('different pos',xy=(400,-320),xytext=(400,-320), color='#9f9f9f',
-            annotation_clip=False)
-    plt.annotate('different screen',xy=(1200,-390),xytext=(1200,-390), color='#9f9f9f',
-            annotation_clip=False)
-    
     plt.title('Duration vs Distance')
-    #remove duplicate labels by putting them in dict
+
+    # remove duplicate labels from the legend
     handles, labels = plt.gca().get_legend_handles_labels()
     by_label = dict(zip(labels, handles))
     plt.legend(by_label.values(), by_label.keys())

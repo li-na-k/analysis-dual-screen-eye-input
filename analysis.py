@@ -57,10 +57,13 @@ def read_folder(folderpath):
 def filter_first_trial(data):
     filtered_data = []
     for row in data:
-        if (row['trial_num']) > 0:
-            filtered_data.append(row)
+        if not 'numberInBlock' in row or not isinstance(row['numberInBlock'], (int, float)):
+            print("Row with missing or invalid 'numberInBlock' detected.")
         else:
-            print("First trial removed.")
+            if (row['numberInBlock']) > 0:
+                filtered_data.append(row)
+            else:
+                print("First trial removed.")
     return filtered_data
 
 def filter_outliers_mad(data, column):

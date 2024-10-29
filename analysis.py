@@ -63,15 +63,13 @@ def filter_first_trial(data):
             print("First trial removed.")
     return filtered_data
 
-# filter outliers using interquartile range (IQR) -> threshold: 1.5 * IQR (difference between first and third quartile)
-def filter_outliers_iqr(data, column):
+def filter_outliers_mad(data, column):
     values = [row[column] for row in data]
-    q1 = np.percentile(values, 25)
-    q3 = np.percentile(values, 75)
-    iqr = q3 - q1
-    threshold = 1.5
-    lower_bound = q1 - threshold * iqr
-    upper_bound = q3 + threshold * iqr
+    median = np.median(values)
+    mad = np.median(np.abs(values-median))
+    threshold = 2.5 #suggested by Leys et al. (2013) as a reasonable default (adjust: threshold should be justified!)
+    lower_bound = median - threshold * mad
+    upper_bound = median + threshold * mad
     print(f"lower bound: {lower_bound}, upper bound: {upper_bound}")
     filtered_data = []
     outliers = []

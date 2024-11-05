@@ -284,13 +284,13 @@ def plot_duration_vs_ydistance(data, bucket_size=50):
     plt.show()
 
 # !--------- enter single csv file or or use files from data_to_analyse folder ------------
-data = read_csv("analysis\data_to_analyse\experimentResults (42).csv")
+#data = read_csv("analysis\data_to_analyse\experimentResults (52).csv")
 
-#folder_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data_to_analyse")
-#data = read_folder(folder_path)
+folder_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data_to_analyse")
+data = read_folder(folder_path)
 #! --------- how should outliars be filtered? ----------
 print("\n------------- Filter ----------------")
-#data = filter_outliers_iqr(data, "durationPerPixel") #! simply filtering all outliers is usually not legitimate (unless they occur for a reason that makes filtering them meaningful)
+# data = filter_outliers_mad(data, "durationPerPixel") #! simply filtering all outliers is usually not legitimate (unless they occur for a reason that makes filtering them meaningful)
 data = filter_errors_aborted(data)
 data = filter_first_trial(data)
 
@@ -346,3 +346,6 @@ for input_type, stats in mean_eyePercentage.items():
 
 
 plot_duration_vs_ydistance(data)
+# plot_bar_diagram(data, "durationPerPixel", "Duration per Pixel (ms)")
+# plot_bar_diagram_per_size(data, "durationPerPixel", 'Mean Duration per Pixel (ms)')
+# plot_bar_diagram_per_size(data, "durationPerPixel", 'Mean Duration per Pixel (ms)', "diffScreen", "Results for different Screens")

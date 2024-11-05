@@ -252,7 +252,7 @@ def plot_duration_vs_ydistance(data, bucket_size=50):
     for input_type in df['inputType'].unique():
         input_df = df[df['inputType'] == input_type].copy()
 
-        input_df['bucketed_distance'] = (input_df['YdistancePrevTarget'] // bucket_size) * bucket_size
+        input_df['bucketed_distance'] = (input_df['XdistancePrevTarget'] // bucket_size) * bucket_size
 
         avg_data = input_df.groupby('bucketed_distance')['duration'].agg(['mean', 'count', 'std']).reset_index()
         avg_data['sem'] = avg_data['std'] / np.sqrt(avg_data['count'])
@@ -264,7 +264,7 @@ def plot_duration_vs_ydistance(data, bucket_size=50):
                 color = marker_map[input_type][size][0]
                 marker = marker_map[input_type][size][1]
                 # scatterplot
-                plt.scatter(size_df['YdistancePrevTarget'], size_df['duration'], 
+                plt.scatter(size_df['XdistancePrevTarget'], size_df['duration'], 
                             color=color, marker=marker, label=(f"{input_type}, {size}"), s=20)
                 # errorbars
                 plt.errorbar(avg_data['bucketed_distance'], avg_data['mean'], 

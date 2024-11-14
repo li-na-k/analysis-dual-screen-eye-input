@@ -93,9 +93,9 @@ def filter_outliers_mad(data, column):
 
 def filter_errors_aborted(data):
     filtered_data = []
+    count_outliers_total = 0
+    count_outliers_mouse = 0
     for row in data:
-        count_outliers_total = 0
-        count_outliers_mouse = 0
         if row['errors'] > 0 or row['aborted'] == 'true':
             count_outliers_total += 1
             if row['inputType'] == 'Mouse':

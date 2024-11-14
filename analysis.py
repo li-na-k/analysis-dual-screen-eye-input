@@ -335,13 +335,13 @@ data = filter_first_trial(data)
 #         print(f"    M = {values_dict['mean']}, SD = {values_dict['stddev']}")
 #     print()
 
-# print("\n-------------- eyeIntervalsDuration --------------")
+print("\n-------------- eyeIntervalsDuration --------------")
 
-# add_eyePercentage_to_data()
-# print("\nEye Percentage:")
-# mean_eyePercentage = calc_stats(data, "eyePercentage")
-# for input_type, stats in mean_eyePercentage.items():
-#     print(f"{input_type}: M = {stats['mean']}, SD = {stats['stddev']}")
+add_eyePercentage_to_data()
+print("\nEye Percentage:")
+mean_eyePercentage = calc_stats(data, "eyePercentage")
+for input_type, stats in mean_eyePercentage.items():
+    print(f"{input_type}: M = {stats['mean']}, SD = {stats['stddev']}")
 
 
 plot_duration_vs_ydistance(data)

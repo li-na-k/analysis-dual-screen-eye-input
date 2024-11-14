@@ -68,7 +68,7 @@ def filter_first_trial(data):
     return filtered_data
 
 def filter_outliers_mad(data, column):
-    values = [row[column] for row in data]
+    values = [float(row[column]) for row in data]
     median = np.median(values)
     mad = np.median(np.abs(values-median))
     threshold = 2.5 #suggested by Leys et al. (2013) as a reasonable default (adjust: threshold should be justified!)
@@ -78,7 +78,7 @@ def filter_outliers_mad(data, column):
     filtered_data = []
     outliers = []
     for row in data:
-        value = row[column]
+        value = float(row[column])
         if value >= lower_bound and value <= upper_bound:
             filtered_data.append(row)
         else:

@@ -63,8 +63,7 @@ def filter_first_trial(data):
         else:
             if (row['numberInBlock']) > 0:
                 filtered_data.append(row)
-            else:
-                print("First trial removed.")
+    print("All first trials removed.")
     return filtered_data
 
 def filter_outliers_mad(data, column):

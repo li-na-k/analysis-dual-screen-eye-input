@@ -336,6 +336,16 @@ data = filter_first_trial(data)
 #     print()
 
 print("\n-------------- eyeIntervalsDuration --------------")
+print("Absolute Durations:")
+mean_eyeDuration = calc_stats(data, "eyeIntervalsDuration")
+mean_mouseDuration = calc_stats(data, "mouseIntervalsDuration")
+print("\nEye:")
+for input_type, stats in mean_eyeDuration.items():
+    print(f"{input_type}: M = {stats['mean']}, SD = {stats['stddev']}")
+print("\nMouse:")
+for input_type, stats in mean_mouseDuration.items():
+    print(f"{input_type}: M = {stats['mean']}, SD = {stats['stddev']}")
+
 
 add_eyePercentage_to_data()
 print("\nEye Percentage:")

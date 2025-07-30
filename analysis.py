@@ -140,7 +140,7 @@ def calc_stats(data, variable = "durationPerPixel"):
     stats = defaultdict(lambda: {'values': [], 'mean': 0, 'stddev': 0})
     for row in data:
         input_type = row['inputType']
-        duration_per_pixel = row[variable]
+        duration_per_pixel = float(row[variable])
         stats[input_type]['values'].append(duration_per_pixel)
     for input_type, values_dict in stats.items():
         durations = values_dict['values']
@@ -168,7 +168,7 @@ def calc_stats_per_size(data, variable="durationPerPixel"):
         input_type = row['inputType']
         size = row['size']
         value = row[variable]
-        stats_by_sizes[input_type][size]['values'].append(value)
+        stats_by_sizes[input_type][size]['values'].append(float(value))
     for input_type, sizes_dict in stats_by_sizes.items():
         for size, values_dict in sizes_dict.items():
             durations = values_dict['values']
@@ -186,7 +186,7 @@ def calc_stats_per_size_diffVar(data, variable="durationPerPixel", diffVar="diff
         diffVarTrue = row[diffVar]
         size = row['size']
         if diffVarTrue:
-            stats_perSize_diffVar[input_type][size]['values'].append(row[variable])
+            stats_perSize_diffVar[input_type][size]['values'].append(float(row[variable]))
     for input_type, sizes_dict in stats_perSize_diffVar.items():      
         for size, values_dict in sizes_dict.items():
             durations = values_dict['values']
@@ -368,6 +368,16 @@ data = filter_first_trial(data)
 #     print()
 
 print("\n-------------- eyeIntervalsDuration --------------")
+print("Absolute Durations:")
+mean_eyeDuration = calc_stats(data, "eyeIntervalsDuration")
+mean_mouseDuration = calc_stats(data, "mouseIntervalsDuration")
+print("\nEye:")
+for input_type, stats in mean_eyeDuration.items():
+    print(f"{input_type}: M = {stats['mean']}, SD = {stats['stddev']}")
+print("\nMouse:")
+for input_type, stats in mean_mouseDuration.items():
+    print(f"{input_type}: M = {stats['mean']}, SD = {stats['stddev']}")
+
 
 add_eyePercentage_to_data()
 print("\nEye Percentage:")

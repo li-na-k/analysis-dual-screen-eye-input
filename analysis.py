@@ -6,23 +6,21 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 data = []
-def read_csv(filepath):
+
+import pandas as pd
+
+def read_csv(filepath) -> pd.DataFrame:
     trial_num_per_input_type = defaultdict(int)
     if filepath.endswith(".csv"):
-        with open(filepath, newline='') as csvfile:
+        with open(filepath, newline='', encoding="utf-8-sig") as csvfile:
             reader = csv.DictReader(csvfile, delimiter=';')
             # Check if the required columns are present
             if all(col in reader.fieldnames for col in ['inputType', 'durationPerPixel', 'YdistancePrevTarget']): #TODO: add necessary columns here
                 prev_screen = None
                 prev_pos = None
                 for row in reader:
-                    # cast from string to int if numeric value
-                    for col in row:
-                        val = row[col]
-                        try:
-                            row[col] = int(val)
-                        except ValueError:
-                            pass #leave it a string  
+                    #casting
+                    row = {col: convert_value(val) for col, val in row.items()}
 
                     # add trial number for the current input type, starting from 0
                     input_type = row['inputType']
@@ -48,6 +46,37 @@ def read_csv(filepath):
     else:
         print(f"Ignoring file {filepath} as it is not a CSV-file.")
     return data
+
+def convert_value(val):
+    """Best effort: convert to bool → int → float → fallback to original."""
+    val = string_to_bool(val)
+
+    if isinstance(val, bool):  # Already clean
+        return val
+
+    if isinstance(val, str):
+        if val.lower() == "infinity":
+            return float("inf")
+        if val == "":
+            return None
+
+        try:
+            return int(val)
+        except ValueError:
+            try:
+                return float(val)
+            except ValueError:
+                return val
+    return val
+
+def string_to_bool(value) -> bool:
+    if isinstance(value, str):
+        upper = value.strip().upper() #removes padding, converts all letters to uppercase
+        if upper == "WAHR":
+            return True
+        if upper == "FALSCH":
+            return False
+    return value
 
 def read_folder(folderpath):
     for filename in os.listdir(folderpath):
@@ -96,7 +125,7 @@ def filter_errors_aborted(data):
     count_outliers_total = 0
     count_outliers_mouse = 0
     for row in data:
-        if row['errors'] > 0 or row['aborted'] == 'true':
+        if row['aborted'] != "false":
             count_outliers_total += 1
             if row['inputType'] == 'Mouse':
                 count_outliers_mouse += 1
@@ -104,6 +133,7 @@ def filter_errors_aborted(data):
             filtered_data.append(row)
     print("number of filtered trials (errors or aborted): ", count_outliers_total)
     print("    of which Mouse input:", count_outliers_mouse)
+    print("left trials: ", len(filtered_data))
     return filtered_data
 
 def calc_stats(data, variable = "durationPerPixel"):
@@ -184,7 +214,7 @@ marker_map = {
        "large": ['#ec7c0c', "o"],
        "small": ['#ec7c0c', "s"] 
     },
-    "NINJA": {
+    "Ninja": {
        "large": ['#080a9e', "o"],
        "small": ['#080a9e', "s"] 
     }
@@ -243,15 +273,16 @@ def plot_bar_diagram_per_size(data, variable="durationPerPixel", label='Mean Dur
     plt.tight_layout()
     plt.show()
 
-def plot_duration_vs_ydistance(data, bucket_size=1):
+def plot_duration_vs_distance(data, bucket_size=1, distColumn="XdistancePrevTarget"):
     df = pd.DataFrame(data)
+    print("columns", df.columns)
 
     plt.figure()
 
     for input_type in df['inputType'].unique():
         input_df = df[df['inputType'] == input_type].copy()
 
-        input_df['bucketed_distance'] = (input_df['XdistancePrevTarget'] // bucket_size) * bucket_size
+        input_df['bucketed_distance'] = (input_df[distColumn] // bucket_size) * bucket_size
 
         avg_data = input_df.groupby('bucketed_distance')['duration'].agg(['mean', 'count', 'std']).reset_index()
         avg_data['sem'] = avg_data['std'] / np.sqrt(avg_data['count'])
@@ -263,7 +294,7 @@ def plot_duration_vs_ydistance(data, bucket_size=1):
                 color = marker_map[input_type][size][0]
                 marker = marker_map[input_type][size][1]
                 # scatterplot
-                plt.scatter(size_df['XdistancePrevTarget'], size_df['duration'], 
+                plt.scatter(size_df[distColumn], size_df['duration'], 
                             color=color, marker=marker, label=(f"{input_type}, {size}"), s=20)
                 # errorbars
                 plt.errorbar(avg_data['bucketed_distance'], avg_data['mean'], 
@@ -291,6 +322,7 @@ data = read_folder(folder_path)
 print("\n------------- Filter ----------------")
 #data = filter_outliers_mad(data, "durationPerPixel") #! simply filtering all outliers is usually not legitimate (unless they occur for a reason that makes filtering them meaningful)
 data = filter_errors_aborted(data)
+data_with_firsts = data
 data = filter_first_trial(data)
 
 # print("\n-------------- DurationPerPixel --------------")
@@ -344,7 +376,56 @@ for input_type, stats in mean_eyePercentage.items():
     print(f"{input_type}: M = {stats['mean']}, SD = {stats['stddev']}")
 
 
-plot_duration_vs_ydistance(data)
+plot_duration_vs_distance(data, 1, "XdistancePrevTarget")
 # plot_bar_diagram(data, "durationPerPixel", "Duration per Pixel (ms)")
 # plot_bar_diagram_per_size(data, "durationPerPixel", 'Mean Duration per Pixel (ms)')
 # plot_bar_diagram_per_size(data, "durationPerPixel", 'Mean Duration per Pixel (ms)', "diffScreen", "Results for different Screens")
+
+
+def print_previous_to_current_positions(data):
+    df = pd.DataFrame(data)
+
+    for i in range(1, len(df)):
+        current_row = df.iloc[i]
+        if current_row['numberInBlock'] != 0:
+            prev_row = df.iloc[i - 1]
+            prev_pos = prev_row['posNumber']
+            curr_pos = current_row['posNumber']
+            if prev_pos == curr_pos:
+                print("Issue: Same pos as before!!", i)
+            x_dist = current_row['XdistancePrevTarget']
+            print(f"{prev_pos} -> {curr_pos}: {x_dist}")
+
+
+from collections import defaultdict
+
+def summarize_transition_distances(data):
+    df = pd.DataFrame(data)
+    transition_map = defaultdict(list)
+
+    for i in range(1, len(df)):
+        current_row = df.iloc[i]
+        if current_row['numberInBlock'] != 0:
+            prev_row = df.iloc[i - 1]
+            prev_pos = prev_row['posNumber']
+            curr_pos = current_row['posNumber']
+
+            if pd.isna(prev_pos) or pd.isna(curr_pos):
+                continue
+
+            if prev_pos == curr_pos:
+                print("Issue: Same pos as before!!", i)
+
+            x_dist = current_row['XdistancePrevTarget']
+            transition = f"{prev_pos} -> {curr_pos}"
+            transition_map[transition].append(x_dist)
+
+    # Summarize results
+    for transition, distances in transition_map.items():
+        unique_dists = sorted(set(distances))
+        print(f"{transition}: {unique_dists}")
+
+
+
+#print_previous_to_current_positions(data_with_firsts)
+summarize_transition_distances(data_with_firsts)

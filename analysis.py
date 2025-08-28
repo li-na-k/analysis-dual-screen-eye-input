@@ -1,16 +1,18 @@
-import csv, os
+import csv, os, re
 from collections import defaultdict
 import statistics
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+from collections import defaultdict
+import pandas as pd
 
 data = []
 
-import pandas as pd
+# region ----- reading and preparing data -------------
 
 def read_csv(filepath) -> pd.DataFrame:
-    trial_num_per_input_type = defaultdict(int)
+    trialNr_per_input_type = defaultdict(int)
     if filepath.endswith(".csv"):
         with open(filepath, newline='', encoding="utf-8-sig") as csvfile:
             reader = csv.DictReader(csvfile, delimiter=';')
@@ -24,8 +26,8 @@ def read_csv(filepath) -> pd.DataFrame:
 
                     # add trial number for the current input type, starting from 0
                     input_type = row['inputType']
-                    row['trial_num'] = trial_num_per_input_type[input_type]
-                    trial_num_per_input_type[input_type] += 1
+                    row['trialNr'] = trialNr_per_input_type[input_type]
+                    trialNr_per_input_type[input_type] += 1
 
                     # add diffScreen and diffPos column
                     current_screen = row['targetOnMainScreen']
@@ -84,6 +86,9 @@ def read_folder(folderpath):
         read_csv(filepath)
     return data
 
+# endregion
+
+# region ----- filter trials / outliers  ---------------------------------
 def filter_first_trial(data):
     filtered_data = []
     for row in data:
@@ -113,7 +118,7 @@ def filter_outliers_mad(data, column):
             outliers.append(row)
     count_outliers_mouse = 0
     for outlier in outliers:
-        print(f"{outlier['inputType']}, trial: {outlier['trial_num']}, value: {outlier['durationPerPixel']}")
+        print(f"{outlier['inputType']}, trial: {outlier['trialNr']}, value: {outlier['durationPerPixel']}")
         if(outlier['inputType'] == 'Mouse'):
             count_outliers_mouse += 1
     print("number of filtered outliers: ", len(data) - len(filtered_data))
@@ -136,6 +141,9 @@ def filter_errors_aborted(data):
     print("left trials: ", len(filtered_data))
     return filtered_data
 
+# endregion
+
+# region ---------- stats calc --------------------
 def calc_stats(data, variable = "durationPerPixel"):
     stats = defaultdict(lambda: {'values': [], 'mean': 0, 'stddev': 0})
     for row in data:
@@ -203,8 +211,9 @@ def add_eyePercentage_to_data():
         else:
             row[new_column_header] = 0  # If 'duration' is zero, set the new value to zero
     return data
+# endregion
 
-
+# region ------------------------ plotting ------------------------
 marker_map = {
     "Mouse": {
         "large": ['#b6b6b6', "o"],
@@ -278,8 +287,8 @@ def plot_duration_vs_distance(data, bucket_size=1, distColumn="XdistancePrevTarg
     print("columns", df.columns)
 
     plt.figure()
-
     for input_type in df['inputType'].unique():
+        
         input_df = df[df['inputType'] == input_type].copy()
 
         input_df['bucketed_distance'] = (input_df[distColumn] // bucket_size) * bucket_size
@@ -313,14 +322,13 @@ def plot_duration_vs_distance(data, bucket_size=1, distColumn="XdistancePrevTarg
     plt.tight_layout()
     plt.show()
 
-# !--------- enter single csv file or or use files from data_to_analyse folder ------------
-#data = read_csv("analysis\data_to_analyse\experimentResults (52).csv")
+# endregion
 
 folder_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data_to_analyse")
 data = read_folder(folder_path)
 #! --------- how should outliars be filtered? ----------
 print("\n------------- Filter ----------------")
-#data = filter_outliers_mad(data, "durationPerPixel") #! simply filtering all outliers is usually not legitimate (unless they occur for a reason that makes filtering them meaningful)
+#data = filter_outliers_mad(data, "durationPerPixel") # simply filtering all outliers is usually not legitimate (unless they occur for a reason that makes filtering them meaningful)
 data = filter_errors_aborted(data)
 data_with_firsts = data
 data = filter_first_trial(data)

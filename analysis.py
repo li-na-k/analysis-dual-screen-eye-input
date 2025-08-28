@@ -74,9 +74,9 @@ def convert_value(val):
 def string_to_bool(value) -> bool:
     if isinstance(value, str):
         upper = value.strip().upper() #removes padding, converts all letters to uppercase
-        if upper == "WAHR":
+        if upper == "WAHR" or upper == "TRUE":
             return True
-        if upper == "FALSCH":
+        if upper == "FALSCH" or upper == "FALSE":
             return False
     return value
 
@@ -130,7 +130,7 @@ def filter_errors_aborted(data):
     count_outliers_total = 0
     count_outliers_mouse = 0
     for row in data:
-        if row['aborted'] != "false":
+        if row['aborted']:
             count_outliers_total += 1
             if row['inputType'] == 'Mouse':
                 count_outliers_mouse += 1

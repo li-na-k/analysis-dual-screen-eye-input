@@ -42,12 +42,38 @@ def read_csv(filepath) -> pd.DataFrame:
                         row["diffPos"] = False
                     prev_screen = current_screen
                     prev_pos = current_pos
+
+                    # add participant ID
+                    filename = os.path.basename(filepath)
+                    file_info = _extract_file_info(filename)
+                    row["inputMethodOrder"] = file_info[0]
+                    row["participant"] = file_info[0]
+
                     data.append(row)
             else:
                 print(f"Ignoring file {filepath} as it does not have all required columns.")
     else:
         print(f"Ignoring file {filepath} as it is not a CSV-file.")
     return data
+
+def _extract_file_info(filename):
+    # Matches: block_participantID_InputMethod_YYYY-MM-DDTHH_MM_SS(.mmm)?Z.csv
+    pattern = (
+        r"^(?P<block>\d+)_"               # numeric block
+        r"(?P<participant>[A-Za-z0-9]+)_" # participant ID
+        r"(?P<input>[A-Za-z0-9]+)_"       # input method
+        r"\d{4}-\d{2}-\d{2}T\d{2}_\d{2}_\d{2}(?:\.\d+)?Z\.csv$"  # timestamp (ignored)
+    )
+
+    m = re.search(pattern, os.path.basename(filename))
+    if not m:
+        return None, None, None
+
+    block = int(m.group("block"))
+    participant = m.group("participant")
+    input_method = m.group("input")
+
+    return block, participant, input_method
 
 def convert_value(val):
     """Best effort: convert to bool → int → float → fallback to original."""
@@ -324,8 +350,26 @@ def plot_duration_vs_distance(data, bucket_size=1, distColumn="XdistancePrevTarg
 
 # endregion
 
+# region ----------- export for R -------------------
+def export_to_csv(data, outpath="export_for_R.csv"):
+    """
+    Exports the collected trial data into a CSV file for further analysis in R.
+    """
+    if not data:
+        print("No data to export.")
+        return
+
+    df = pd.DataFrame(data)
+    df.to_csv(outpath, index=False, encoding="utf-8-sig")
+    print(f"✅ Data exported to {outpath} ({len(df)} rows, {len(df.columns)} columns).")
+    return df
+# endregion
+
 folder_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data_to_analyse")
 data = read_folder(folder_path)
+
+export_to_csv(data)
+
 #! --------- how should outliars be filtered? ----------
 print("\n------------- Filter ----------------")
 #data = filter_outliers_mad(data, "durationPerPixel") # simply filtering all outliers is usually not legitimate (unless they occur for a reason that makes filtering them meaningful)

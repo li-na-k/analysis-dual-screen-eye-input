@@ -350,6 +350,48 @@ def plot_duration_vs_distance(data, bucket_size=1, distColumn="XdistancePrevTarg
 
 # endregion
 
+# region ------------- position checks -------------
+def print_previous_to_current_positions(data):
+    df = pd.DataFrame(data)
+
+    for i in range(1, len(df)):
+        current_row = df.iloc[i]
+        if current_row['numberInBlock'] != 0:
+            prev_row = df.iloc[i - 1]
+            prev_pos = prev_row['posNumber']
+            curr_pos = current_row['posNumber']
+            if prev_pos == curr_pos:
+                print("Issue: Same pos as before!!", i)
+            x_dist = current_row['XdistancePrevTarget']
+            print(f"{prev_pos} -> {curr_pos}: {x_dist}")
+
+def summarize_transition_distances(data):
+    df = pd.DataFrame(data)
+    transition_map = defaultdict(list)
+
+    for i in range(1, len(df)):
+        current_row = df.iloc[i]
+        if current_row['numberInBlock'] != 0:
+            prev_row = df.iloc[i - 1]
+            prev_pos = prev_row['posNumber']
+            curr_pos = current_row['posNumber']
+
+            if pd.isna(prev_pos) or pd.isna(curr_pos):
+                continue
+
+            if prev_pos == curr_pos:
+                print("Issue: Same pos as before!!", i)
+
+            x_dist = current_row['XdistancePrevTarget']
+            transition = f"{prev_pos} -> {curr_pos}"
+            transition_map[transition].append(x_dist)
+
+    # Summarize results
+    for transition, distances in transition_map.items():
+        unique_dists = sorted(set(distances))
+        print(f"{transition}: {unique_dists}")
+#endregion
+
 # region ----------- export for R -------------------
 def export_to_csv(data, outpath="export_for_R.csv"):
     """
@@ -365,6 +407,7 @@ def export_to_csv(data, outpath="export_for_R.csv"):
     return df
 # endregion
 
+# !--------- enter single csv file or or use files from data_to_analyse folder ------------
 folder_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data_to_analyse")
 data = read_folder(folder_path)
 
@@ -376,6 +419,9 @@ print("\n------------- Filter ----------------")
 data = filter_errors_aborted(data)
 data_with_firsts = data
 data = filter_first_trial(data)
+
+
+
 
 # print("\n-------------- DurationPerPixel --------------")
 # mean_durationPerPixel = calc_stats(data, "durationPerPixel")
@@ -442,50 +488,6 @@ plot_duration_vs_distance(data, 1, "XdistancePrevTarget")
 # plot_bar_diagram(data, "durationPerPixel", "Duration per Pixel (ms)")
 # plot_bar_diagram_per_size(data, "durationPerPixel", 'Mean Duration per Pixel (ms)')
 # plot_bar_diagram_per_size(data, "durationPerPixel", 'Mean Duration per Pixel (ms)', "diffScreen", "Results for different Screens")
-
-
-def print_previous_to_current_positions(data):
-    df = pd.DataFrame(data)
-
-    for i in range(1, len(df)):
-        current_row = df.iloc[i]
-        if current_row['numberInBlock'] != 0:
-            prev_row = df.iloc[i - 1]
-            prev_pos = prev_row['posNumber']
-            curr_pos = current_row['posNumber']
-            if prev_pos == curr_pos:
-                print("Issue: Same pos as before!!", i)
-            x_dist = current_row['XdistancePrevTarget']
-            print(f"{prev_pos} -> {curr_pos}: {x_dist}")
-
-
-from collections import defaultdict
-
-def summarize_transition_distances(data):
-    df = pd.DataFrame(data)
-    transition_map = defaultdict(list)
-
-    for i in range(1, len(df)):
-        current_row = df.iloc[i]
-        if current_row['numberInBlock'] != 0:
-            prev_row = df.iloc[i - 1]
-            prev_pos = prev_row['posNumber']
-            curr_pos = current_row['posNumber']
-
-            if pd.isna(prev_pos) or pd.isna(curr_pos):
-                continue
-
-            if prev_pos == curr_pos:
-                print("Issue: Same pos as before!!", i)
-
-            x_dist = current_row['XdistancePrevTarget']
-            transition = f"{prev_pos} -> {curr_pos}"
-            transition_map[transition].append(x_dist)
-
-    # Summarize results
-    for transition, distances in transition_map.items():
-        unique_dists = sorted(set(distances))
-        print(f"{transition}: {unique_dists}")
 
 
 

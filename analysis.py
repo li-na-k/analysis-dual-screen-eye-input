@@ -393,7 +393,7 @@ def summarize_transition_distances(data):
 #endregion
 
 # region ----------- export for R -------------------
-def export_to_csv(data, outpath="export_for_R.csv"):
+def export_to_csv(data, filename="export_for_R.csv"):
     """
     Exports the collected trial data into a CSV file for further analysis in R.
     """
@@ -402,8 +402,9 @@ def export_to_csv(data, outpath="export_for_R.csv"):
         return
 
     df = pd.DataFrame(data)
-    df.to_csv(outpath, index=False, encoding="utf-8-sig")
-    print(f"✅ Data exported to {outpath} ({len(df)} rows, {len(df.columns)} columns).")
+    os.makedirs("r", exist_ok=True)
+    df.to_csv(f"r/{filename}", index=False, encoding="utf-8-sig", sep=";")
+    print(f"Data exported to {filename} ({len(df)} rows, {len(df.columns)} columns).")
     return df
 # endregion
 
@@ -411,7 +412,7 @@ def export_to_csv(data, outpath="export_for_R.csv"):
 folder_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data_to_analyse")
 data = read_folder(folder_path)
 
-export_to_csv(data)
+export_to_csv(data, "all_trials.csv")
 
 #! --------- how should outliars be filtered? ----------
 print("\n------------- Filter ----------------")
@@ -419,6 +420,7 @@ print("\n------------- Filter ----------------")
 data = filter_errors_aborted(data)
 data_with_firsts = data
 data = filter_first_trial(data)
+export_to_csv(data, "filtered_firsts_and_errors.csv")
 
 
 

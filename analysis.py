@@ -308,6 +308,53 @@ def plot_bar_diagram_per_size(data, variable="durationPerPixel", label='Mean Dur
     plt.tight_layout()
     plt.show()
 
+
+def plot_duration_vs_distance_per_participant(data, bucket_size=1, distColumn="XdistancePrevTarget", out_dir="plots_per_participant"):
+    df = pd.DataFrame(data)
+
+    os.makedirs(out_dir, exist_ok=True)  # Zielordner anlegen
+
+    for participant in df['participant'].unique():
+        df_part = df[df['participant'] == participant]
+
+        plt.figure(figsize=(8, 6))
+        for input_type in df_part['inputType'].unique():
+            input_df = df_part[df_part['inputType'] == input_type].copy()
+            input_df['bucketed_distance'] = (input_df[distColumn] // bucket_size) * bucket_size
+
+            avg_data = input_df.groupby('bucketed_distance')['duration'].agg(['mean', 'count', 'std']).reset_index()
+            avg_data['sem'] = avg_data['std'] / np.sqrt(avg_data['count'])
+
+            for size in input_df['size'].unique():
+                size_df = input_df[input_df['size'] == size]
+                if input_type in marker_map:
+                    color = marker_map[input_type][size][0]
+                    marker = marker_map[input_type][size][1]
+
+                    # scatterplot
+                    plt.scatter(size_df[distColumn], size_df['duration'], 
+                                color=color, marker=marker, label=f"{input_type}, {size}", s=20)
+
+                    # errorbars
+                    plt.errorbar(avg_data['bucketed_distance'], avg_data['mean'],
+                                 yerr=avg_data['sem'], fmt='o', color=color,
+                                 markersize=6, linestyle='--', capsize=5)
+
+        plt.xlabel('Distance to previous target (px)')
+        plt.ylabel('Duration (ms)')
+        plt.title(f'Duration vs Distance – Participant {participant}')
+        handles, labels = plt.gca().get_legend_handles_labels()
+        by_label = dict(zip(labels, handles))
+        plt.legend(by_label.values(), by_label.keys())
+
+        plt.tight_layout()
+        out_path = os.path.join(out_dir, f"duration_distance_{participant}.png")
+        plt.savefig(out_path)
+        plt.close()  # wichtig, sonst überlappen Plots beim nächsten Teilnehmer
+
+        print(f"Plot für {participant} gespeichert unter {out_path}")
+
+
 def plot_duration_vs_distance(data, bucket_size=1, distColumn="XdistancePrevTarget"):
     df = pd.DataFrame(data)
     print("columns", df.columns)
@@ -346,6 +393,7 @@ def plot_duration_vs_distance(data, bucket_size=1, distColumn="XdistancePrevTarg
     by_label = dict(zip(labels, handles))
     plt.legend(by_label.values(), by_label.keys())
     plt.tight_layout()
+    plt.savefig("duration-distance-plot.png")
     plt.show()
 
 # endregion
@@ -409,7 +457,7 @@ def export_to_csv(data, filename="export_for_R.csv"):
 # endregion
 
 # !--------- enter single csv file or or use files from data_to_analyse folder ------------
-folder_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data_to_analyse")
+folder_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "All Data")
 data = read_folder(folder_path)
 
 export_to_csv(data, "all_trials.csv")
@@ -487,6 +535,7 @@ for input_type, stats in mean_eyePercentage.items():
 
 
 plot_duration_vs_distance(data, 1, "XdistancePrevTarget")
+#plot_duration_vs_distance_per_participant(data)
 # plot_bar_diagram(data, "durationPerPixel", "Duration per Pixel (ms)")
 # plot_bar_diagram_per_size(data, "durationPerPixel", 'Mean Duration per Pixel (ms)')
 # plot_bar_diagram_per_size(data, "durationPerPixel", 'Mean Duration per Pixel (ms)', "diffScreen", "Results for different Screens")

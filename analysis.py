@@ -155,14 +155,25 @@ def filter_errors_aborted(data):
     filtered_data = []
     count_outliers_total = 0
     count_outliers_mouse = 0
+
+    blocks = {}
+    block_id = -1
+
     for row in data:
-        if row['aborted']:
-            count_outliers_total += 1
-            if row['inputType'] == 'Mouse':
-                count_outliers_mouse += 1
+        if row["numberInBlock"] == 0:
+            block_id += 1  # neuer Block beginnt
+        blocks.setdefault(block_id, []).append(row)
+
+    # jetzt alle Blöcke prüfen
+    for block_id, rows in blocks.items():
+        if any(r["aborted"] for r in rows):
+            # ganzer Block raus
+            count_outliers_total += len(rows)
+            count_outliers_mouse += sum(1 for r in rows if r["inputType"] == "Mouse")
         else:
-            filtered_data.append(row)
-    print("number of filtered trials (errors or aborted): ", count_outliers_total)
+            filtered_data.extend(rows)
+
+    print("number of filtered trials (errors or aborted):", count_outliers_total)
     print("    of which Mouse input:", count_outliers_mouse)
     print("left trials: ", len(filtered_data))
     return filtered_data

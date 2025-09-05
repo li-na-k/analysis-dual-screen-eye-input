@@ -47,7 +47,7 @@ def read_csv(filepath) -> pd.DataFrame:
                     filename = os.path.basename(filepath)
                     file_info = _extract_file_info(filename)
                     row["inputMethodOrder"] = file_info[0]
-                    row["participant"] = file_info[0]
+                    row["participant"] = file_info[1]
 
                     data.append(row)
             else:
@@ -59,9 +59,9 @@ def read_csv(filepath) -> pd.DataFrame:
 def _extract_file_info(filename):
     # Matches: block_participantID_InputMethod_YYYY-MM-DDTHH_MM_SS(.mmm)?Z.csv
     pattern = (
-        r"^(?P<block>\d+)_"               # numeric block
-        r"(?P<participant>[A-Za-z0-9]+)_" # participant ID
-        r"(?P<input>[A-Za-z0-9]+)_"       # input method
+        r"^(?P<block>[A-Za-z0-9]+)-"      # number or "x" placeholder
+        r"(?P<participant>[A-Za-z0-9]+)-" # participant ID
+        r"(?P<input>[A-Za-z0-9]+)-"       # input method
         r"\d{4}-\d{2}-\d{2}T\d{2}_\d{2}_\d{2}(?:\.\d+)?Z\.csv$"  # timestamp (ignored)
     )
 
@@ -69,7 +69,7 @@ def _extract_file_info(filename):
     if not m:
         return None, None, None
 
-    block = int(m.group("block"))
+    block = 0 #int(m.group("block"))
     participant = m.group("participant")
     input_method = m.group("input")
 
